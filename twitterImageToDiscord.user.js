@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Repost Image to Discord via Webhook
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Post image in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -11,12 +11,17 @@
 // ==/UserScript==
 // https://discordapp.com/developers/docs/resources/webhook#execute-webhook
 
-(function() {
+document.onreadystatechange = function () {
     'use strict';
+
+    if (document.readyState != "complete") {
+        return;
+    }
 
     console.log($.fn.jquery);
 
-    const hookUri = 'https://discordapp.com/api/webhooks/541326072134762496/i3cz92MdCbihC3QO3puIlMKdWXLPAJn7ZEfVelr3JvUun70hmd1ofHH2sHiH8Tuis0Xn',
+    // Set your webhook here!
+    const hookUri = 'https://discordapp.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
           data = {
               // content string	     the message contents (up to 2000 characters)	one of content, file, embeds
               // username	string	 override the default username of the webhook	false
@@ -64,4 +69,4 @@
             $('#dscrd-share', e.currentTarget).detach();
         })
     ;
-})();
+};
