@@ -30,11 +30,6 @@
         slackHookUri: '' // https://hooks.slack.com/services/T00000000/XXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     };
 
-    if (typeof($) !== "function") {
-        console.log('no jquery!');
-        return;
-    }
-
     console.log($.fn.jquery);
 
     const data = {
