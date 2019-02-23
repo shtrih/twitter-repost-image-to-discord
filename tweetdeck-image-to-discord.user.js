@@ -51,7 +51,7 @@
             isDiscord = $(e.target).hasClass('dscrd')
             , tweetHeader = $imageContainer.parents('.js-stream-item-content').find('.js-tweet-header')
             , tweetAuthorLogin = $('.username', tweetHeader).text()
-            , imageUri = $imageContainer.attr('style').replace('background-image:url(', '')/*.replace('?format=jpg', '')*/.replace(/(&name=|:)[^:)]+[)]$/, '')
+            , imageUri = $imageContainer.attr('style').replace('background-image:url(', '')/*.replace('?format=jpg', '')*/.replace(/(&name=|(?<!ttps):)[^:)]+[)]$/, '')
             // , tweetAuthorAvatar = $('img.tweet-avatar', tweetHeader).attr('src')
         ;
 
