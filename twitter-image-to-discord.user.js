@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -71,11 +71,13 @@ document.onreadystatechange = function () {
             data.text = $imageContainer.children('img').attr('src');
         }
 
-        if (config.reposterAvatar) {
-            data.icon_url = config.reposterAvatar;
-        }
         // Soo strange. If you use an avatar then Discord didn't show a preview of the image!
-        //else data.icon_url = tweetAuthorAvatar;
+        if (!isDiscord) {
+            if (config.reposterAvatar) {
+                data.icon_url = config.reposterAvatar;
+            }
+            //else data.icon_url = tweetAuthorAvatar;
+        }
 
         GM_xmlhttpRequest({
             method: 'POST',
