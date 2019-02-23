@@ -65,10 +65,6 @@ document.onreadystatechange = function () {
 
         GM_xmlhttpRequest({
             method: 'POST',
-            /**
-            * @see https://api.slack.com/custom-integrations/incoming-webhooks#legacy-customizations
-            * Using Slack hook because I have no idea why default hook api respond http error code 400.
-            */
             url: isDiscord ? config.discordHookUri + '/slack' : config.slackHookUri,
             data: JSON.stringify(data),
             overrideMimeType: 'application/json',
