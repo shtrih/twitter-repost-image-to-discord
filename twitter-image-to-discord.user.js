@@ -8,7 +8,7 @@
 // @grant        GM_xmlhttpRequest
 // @connect      discordapp.com
 // @connect      hooks.slack.com
-// @homepage     https://gist.github.com/shtrih/3dc6fb5aac1bb87f3e803acccfb74b67
+// @homepage     https://github.com/shtrih/twitter-repost-image-to-discord
 // @website      https://github.com/shtrih
 // ==/UserScript==
 
