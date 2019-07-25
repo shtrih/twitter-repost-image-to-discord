@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      1.0.0
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
+// @require      https://code.jquery.com/jquery-3.4.1.slim.min.js#sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8=
 // @grant        GM_xmlhttpRequest
 // @connect      discordapp.com
 // @connect      hooks.slack.com
@@ -13,62 +14,62 @@
 // ==/UserScript==
 
 /**
-* @see https://api.slack.com/custom-integrations/incoming-webhooks#legacy-customizations
-* @see https://discordapp.com/developers/docs/resources/webhook#execute-webhook
-*/
+ * @see https://api.slack.com/custom-integrations/incoming-webhooks#legacy-customizations
+ * @see https://discordapp.com/developers/docs/resources/webhook#execute-webhook
+ */
 
 // Set your webhook here!
 const config = {
-    reposterNickname: '', // Your nickname
+    reposterNickname: '', // Your nickname. Set empty to use tweet author nickname.
     reposterAvatar: '', // An avatar url, for example https://avatars.slack-edge.com/2017-12-21/289683552497_80f1fdcf05f0b302b12f_192.png
 
     discordHookUri: '', // https://discordapp.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     slackHookUri: '' // https://hooks.slack.com/services/T00000000/XXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 };
 
-document.onreadystatechange = function () {
+setTimeout(function () {
     'use strict';
-
-    if (document.readyState != "complete") {
-        return;
-    }
-
-    if (typeof($) !== "function") {
-        console.log('no jquery!');
-        return;
-    }
 
     console.log($.fn.jquery);
 
     const data = {
-              // text       string   the message contents (up to 2000 characters)	one of content, file, embeds
-              // username   string   override the default username of the webhook	false
-              // icon_url   string   override the default avatar of the webhook	false
-          },
-          buttons = $(
-              (config.discordHookUri ? '<div class="btn-link share-42 dscrd" style="position: absolute; background: rgba(255, 255, 255, 0.9); font-size: 12px; padding: 0 4px; z-index: 2;">to Discord</div>' : '')
-              + (config.slackHookUri ? '<div class="btn-link share-42" style="position: absolute; top: 20px; background: rgba(255, 255, 255, 0.9); font-size: 12px; padding: 0 4px; z-index: 2;">to Slack</div>' : '')
-          )
+            // text       string   the message contents (up to 2000 characters)	one of content, file, embeds
+            // username   string   override the default username of the webhook	false
+            // icon_url   string   override the default avatar of the webhook	false
+        },
+        buttons = $(
+            (config.discordHookUri ? '<div class="btn-link share-42 dscrd" style="position: absolute; background: rgba(255, 255, 255, 0.9); font-size: 14px; padding: 0 4px; z-index: 2;">to Discord</div>' : '')
+            + (config.slackHookUri ? '<div class="btn-link share-42" style="position: absolute; top: 20px; background: rgba(255, 255, 255, 0.9); font-size: 14px; padding: 0 4px; z-index: 2;">to Slack</div>' : '')
+        )
     ;
     let $imageContainer;
 
     buttons.on('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
 
         const
             isDiscord = $(e.target).hasClass('dscrd')
-            , tweetHeader = $imageContainer.parents('.content').children('.stream-item-header')
-            , tweetAuthorLogin = $('.username', tweetHeader).first().text()
-            // , tweetAuthorAvatar = $('img.avatar', tweetHeader).attr('src')
+            , tweet = $imageContainer.closest('article')
+            , tweetAuthor = tweet.find('div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
+            , tweetPageAuthor = tweet.find('li > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
+            , retweetAuthor = tweet.find('div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div:nth-child(1) > div:nth-child(2) > div > span').text()
+            , tweetAuthorLogin = tweetAuthor || tweetPageAuthor || retweetAuthor
+            , imgSrc = $imageContainer.find('img')
+                .prev('div')
+                .attr('style')
+                .replace('background-image: url("', '')
+                /*.replace('?format=jpg', '')*/
+                .replace(/&name=[^"]+"[)];$/, '')
         ;
 
         if (config.reposterNickname) {
             data.username = config.reposterNickname + ' 🔁';
-            data.text = 'by '+ tweetAuthorLogin +'\n' + $imageContainer.children('img').attr('src');
+            data.text = 'by '+ tweetAuthorLogin +'\n' + imgSrc;
         }
         else {
             data.username = tweetAuthorLogin;
-            data.text = $imageContainer.children('img').attr('src');
+            data.text = imgSrc;
         }
 
         // Soo strange. If you use an avatar then Discord didn't show a preview of the image!
@@ -93,14 +94,14 @@ document.onreadystatechange = function () {
         });
     });
 
-    $('#page-outer')
-        .on('mouseenter', '.AdaptiveMedia-container .AdaptiveMedia-photoContainer', (e) => {
-            $imageContainer = $(e.currentTarget);
+    $('main')
+        .on('mouseenter', 'section article img', (e) => {
+            $imageContainer = $(e.currentTarget).closest('a');
 
             $imageContainer.prepend(buttons);
         })
-        .on('mouseleave', '.AdaptiveMedia-container .AdaptiveMedia-photoContainer', (e) => {
-            $('.share-42', e.currentTarget).detach();
-        })
+        // .on('mouseleave', 'section article img', (e) => {
+            // $('.share-42', e.currentTarget).detach();
+        // })
     ;
-};
+}, 4000);
