@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -32,12 +32,7 @@ setTimeout(function () {
 
     console.log($.fn.jquery);
 
-    const data = {
-            // text       string   the message contents (up to 2000 characters)	one of content, file, embeds
-            // username   string   override the default username of the webhook	false
-            // icon_url   string   override the default avatar of the webhook	false
-        },
-        buttons = $(
+    const buttons = $(
             (config.discordHookUri ? '<div class="btn-link share-42 dscrd" style="position: absolute; background: rgba(255, 255, 255, 0.9); font-size: 14px; padding: 0 4px; z-index: 2;">to Discord</div>' : '')
             + (config.slackHookUri ? '<div class="btn-link share-42" style="position: absolute; top: 20px; background: rgba(255, 255, 255, 0.9); font-size: 14px; padding: 0 4px; z-index: 2;">to Slack</div>' : '')
         )
@@ -49,7 +44,12 @@ setTimeout(function () {
         e.stopPropagation();
 
         const
-            isDiscord = $(e.target).hasClass('dscrd')
+            data = {
+                // text       string   the message contents (up to 2000 characters)	one of content, file, embeds
+                // username   string   override the default username of the webhook	false
+                // icon_url   string   override the default avatar of the webhook	false
+            }
+            , isDiscord = $(e.target).hasClass('dscrd')
             , tweet = $imageContainer.closest('article')
             , tweetAuthor = tweet.find('div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
             , tweetPageAuthor = tweet.find('li > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
@@ -63,21 +63,19 @@ setTimeout(function () {
                 .replace(/&name=[^"]+"[)];$/, '')
         ;
 
+        data.username = tweetAuthorLogin;
+        data.text = imgSrc;
+
         if (config.reposterNickname) {
             data.username = config.reposterNickname + ' 🔁';
-            data.text = 'by '+ tweetAuthorLogin +'\n' + imgSrc;
-        }
-        else {
-            data.username = tweetAuthorLogin;
-            data.text = imgSrc;
+            data.text = 'by ' + tweetAuthorLogin + '\n' + imgSrc;
         }
 
-        // Soo strange. If you use an avatar then Discord didn't show a preview of the image!
+        // Soo strange. If you override webhook avatar then Discord didn't show a preview of the image!
         if (!isDiscord) {
             if (config.reposterAvatar) {
                 data.icon_url = config.reposterAvatar;
             }
-            //else data.icon_url = tweetAuthorAvatar;
         }
 
         GM_xmlhttpRequest({
