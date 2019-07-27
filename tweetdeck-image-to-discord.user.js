@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tweetdeck-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://tweetdeck.twitter.com/*
@@ -32,12 +32,7 @@
 
     console.log($.fn.jquery);
 
-    const data = {
-              // text       string   the message contents (up to 2000 characters)	one of content, file, embeds
-              // username   string   override the default username of the webhook	false
-              // icon_url   string   override the default avatar of the webhook	false
-          },
-          buttons = $(
+    const buttons = $(
               (config.discordHookUri ? '<a class="link-complex share-42 dscrd" style="display: block; position: absolute; top: 15px; background: rgba(255, 255, 255, 0.9); font-size: 12px; padding: 0 4px; z-index: 2;">to Discord</a>' : '')
               + (config.slackHookUri ? '<a class="link-complex share-42" style="display: block; position: absolute; top: 35px; background: rgba(255, 255, 255, 0.9); font-size: 12px; padding: 0 4px; z-index: 2;">to Slack</a>' : '')
           )
@@ -48,7 +43,12 @@
         e.stopPropagation();
 
         const
-            isDiscord = $(e.target).hasClass('dscrd')
+            data = {
+                // text       string   the message contents (up to 2000 characters)	one of content, file, embeds
+                // username   string   override the default username of the webhook	false
+                // icon_url   string   override the default avatar of the webhook	false
+            }
+            , isDiscord = $(e.target).hasClass('dscrd')
             , tweetHeader = $imageContainer.parents('.js-stream-item-content').find('.js-tweet-header')
             , tweetAuthorLogin = $('.username', tweetHeader).text()
             , imageUri = $imageContainer.attr('style')
@@ -58,14 +58,12 @@
             // , tweetAuthorAvatar = $('img.tweet-avatar', tweetHeader).attr('src')
         ;
 
+        data.username = tweetAuthorLogin;
+        data.text = imageUri;
 
         if (config.reposterNickname) {
             data.username = config.reposterNickname + ' 🔁';
             data.text = 'by '+ tweetAuthorLogin +'\n' + imageUri;
-        }
-        else {
-            data.username = tweetAuthorLogin;
-            data.text = imageUri;
         }
 
         if (config.reposterAvatar && !isDiscord) {
