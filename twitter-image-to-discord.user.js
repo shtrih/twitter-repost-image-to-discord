@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.1.0
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -26,80 +26,112 @@ const config = {
     discordHookUri: '', // https://discordapp.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     slackHookUri: '' // https://hooks.slack.com/services/T00000000/XXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 };
+const STORAGE_KEY = 'twttr-img2dscrd';
 
-setTimeout(function () {
-    'use strict';
+run();
 
-    console.log($.fn.jquery);
+function run () {
+    // move config for the future version
+    saveConfig(config);
 
-    const buttons = $(
-            (config.discordHookUri ? '<div class="btn-link share-42 dscrd" style="position: absolute; background: rgba(255, 255, 255, 0.9); font-size: 14px; padding: 0 4px; z-index: 2;">to Discord</div>' : '')
-            + (config.slackHookUri ? '<div class="btn-link share-42" style="position: absolute; top: 20px; background: rgba(255, 255, 255, 0.9); font-size: 14px; padding: 0 4px; z-index: 2;">to Slack</div>' : '')
-        )
-    ;
-    let $imageContainer;
+    setTimeout(function () {
+        'use strict';
 
-    buttons.on('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        console.log($.fn.jquery);
 
-        const
-            data = {
-                // text       string   the message contents (up to 2000 characters)	one of content, file, embeds
-                // username   string   override the default username of the webhook	false
-                // icon_url   string   override the default avatar of the webhook	false
-            }
-            , isDiscord = $(e.target).hasClass('dscrd')
-            , tweet = $imageContainer.closest('article')
-            , tweetAuthor = tweet.find('div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
-            , tweetPageAuthor = tweet.find('li > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
-            , retweetAuthor = tweet.find('div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div:nth-child(1) > div:nth-child(2) > div > span').text()
-            , tweetAuthorLogin = tweetAuthor || tweetPageAuthor || retweetAuthor
-            , imgSrc = $imageContainer.find('img')
-                .prev('div')
-                .attr('style')
-                .replace('background-image: url("', '')
-                /*.replace('?format=jpg', '')*/
-                .replace(/&name=[^"]+"[)];$/, '')
+        const buttons = $(
+                (config.discordHookUri ? '<div class="btn-link share-42 dscrd" style="position: absolute; background: rgba(255, 255, 255, 0.9); font-size: 14px; padding: 0 4px; z-index: 2;">to Discord</div>' : '')
+                + (config.slackHookUri ? '<div class="btn-link share-42" style="position: absolute; top: 20px; background: rgba(255, 255, 255, 0.9); font-size: 14px; padding: 0 4px; z-index: 2;">to Slack</div>' : '')
+            )
         ;
+        let $imageContainer;
 
-        data.username = tweetAuthorLogin;
-        data.text = imgSrc;
+        buttons.on('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-        if (config.reposterNickname) {
-            data.username = config.reposterNickname + ' 🔁';
-            data.text = 'by ' + tweetAuthorLogin + '\n' + imgSrc;
-        }
+            const
+                data = {
+                    // text       string   the message contents (up to 2000 characters)	one of content, file, embeds
+                    // username   string   override the default username of the webhook	false
+                    // icon_url   string   override the default avatar of the webhook	false
+                }
+                , isDiscord = $(e.target).hasClass('dscrd')
+                , tweet = $imageContainer.closest('article')
+                , tweetAuthor = tweet.find('div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
+                , tweetPageAuthor = tweet.find('li > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
+                , retweetAuthor = tweet.find('div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div:nth-child(1) > div:nth-child(2) > div > span').text()
+                , tweetAuthorLogin = tweetAuthor || tweetPageAuthor || retweetAuthor
+                , imgSrc = $imageContainer.find('img')
+                    .prev('div')
+                    .attr('style')
+                    .replace('background-image: url("', '')
+                    /*.replace('?format=jpg', '')*/
+                    .replace(/&name=[^"]+"[)];$/, '')
+            ;
 
-        // Soo strange. If you override webhook avatar then Discord didn't show a preview of the image!
-        if (!isDiscord) {
-            if (config.reposterAvatar) {
-                data.icon_url = config.reposterAvatar;
+            data.username = tweetAuthorLogin;
+            data.text = imgSrc;
+
+            if (config.reposterNickname) {
+                data.username = config.reposterNickname + ' 🔁';
+                data.text = 'by ' + tweetAuthorLogin + '\n' + imgSrc;
             }
-        }
 
-        GM_xmlhttpRequest({
-            method: 'POST',
-            url: isDiscord ? config.discordHookUri + '/slack' : config.slackHookUri,
-            data: JSON.stringify(data),
-            overrideMimeType: 'application/json',
-            onload: (res) => {
-                if (res.status !== 200) {
-                    alert('Error send request to ' + (isDiscord ? 'Discord' : 'Slack') + '. See console (F12).');
-                    console.log(res);
+            // Soo strange. If you override webhook avatar then Discord didn't show a preview of the image!
+            if (!isDiscord) {
+                if (config.reposterAvatar) {
+                    data.icon_url = config.reposterAvatar;
                 }
             }
+
+            GM_xmlhttpRequest({
+                method: 'POST',
+                url: isDiscord ? config.discordHookUri + '/slack' : config.slackHookUri,
+                data: JSON.stringify(data),
+                overrideMimeType: 'application/json',
+                onload: (res) => {
+                    if (res.status !== 200) {
+                        alert('Error send request to ' + (isDiscord ? 'Discord' : 'Slack') + '. See console (F12).');
+                        console.log(res);
+                    }
+                }
+            });
         });
-    });
 
-    $('main')
-        .on('mouseenter', 'section article img', (e) => {
-            $imageContainer = $(e.currentTarget).closest('a');
+        $('main')
+            .on('mouseenter', 'section article img', (e) => {
+                $imageContainer = $(e.currentTarget).closest('a');
 
-            $imageContainer.prepend(buttons);
-        })
-        // .on('mouseleave', 'section article img', (e) => {
-            // $('.share-42', e.currentTarget).detach();
-        // })
-    ;
-}, 4000);
+                $imageContainer.prepend(buttons);
+            })
+            // .on('mouseleave', 'section article img', (e) => {
+                // $('.share-42', e.currentTarget).detach();
+            // })
+        ;
+    }, 4000);
+}
+
+function saveConfig(config) {
+    return setLocalStorageItem(STORAGE_KEY, JSON.stringify(config));
+}
+
+function getLocalStorageItem(name) {
+    try {
+        return localStorage.getItem(name);
+    }
+    catch (e) {
+        return null;
+    }
+}
+
+function setLocalStorageItem(name, value) {
+    try {
+        localStorage.setItem(name, value);
+    } catch (e) {
+        console.log('Failed to set local storage item ' + name + ', ' + e + '.');
+        return false;
+    }
+
+    return true;
+}
