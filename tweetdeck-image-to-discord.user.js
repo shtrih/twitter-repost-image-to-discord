@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tweetdeck-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://tweetdeck.twitter.com/*
@@ -52,10 +52,11 @@
             , tweetHeader = $imageContainer.parents('.js-stream-item-content').find('.js-tweet-header')
             , tweetAuthorLogin = $('.username', tweetHeader).text()
             , imageUri = $imageContainer.attr('style')
+                // background-image:url(https://pbs.twimg.com/media/EAuEVnVUYAId48z.jpg?format=jpg&name=small) →
+                // → https://pbs.twimg.com/media/EAuEVnVUYAId48z.jpg:orig
                 .replace('background-image:url(', '')
-                // .replace('?format=jpg', '')
-                .replace(/&name=[^)]+[)]$/, '')
-            // , tweetAuthorAvatar = $('img.tweet-avatar', tweetHeader).attr('src')
+                .replace(/[?]format=[a-z]+/, '')
+                .replace(/&name=[^)]+[)]$/, ':orig')
         ;
 
         data.username = tweetAuthorLogin;
