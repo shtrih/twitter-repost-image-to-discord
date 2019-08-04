@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.1.2
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -60,8 +60,9 @@ function run () {
                 , tweet = $imageContainer.closest('article')
                 , tweetAuthor = tweet.find('div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
                 , tweetPageAuthor = tweet.find('li > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
+                , tweetPageAuthor2 = tweet.find('div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
                 , retweetAuthor = tweet.find('div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div:nth-child(1) > div:nth-child(2) > div > span').text()
-                , tweetAuthorLogin = tweetAuthor || tweetPageAuthor || retweetAuthor
+                , tweetAuthorLogin = tweetAuthor || tweetPageAuthor || tweetPageAuthor2 || retweetAuthor
                 , imgSrc = $imageContainer.find('img')
                     .prev('div')
                     .attr('style')
