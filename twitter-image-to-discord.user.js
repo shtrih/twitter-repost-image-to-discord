@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.1.2
+// @version      1.1.3
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -57,12 +57,6 @@ function run () {
                     // icon_url   string   override the default avatar of the webhook	false
                 }
                 , isDiscord = $(e.target).hasClass('dscrd')
-                , tweet = $imageContainer.closest('article')
-                , tweetAuthor = tweet.find('div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
-                , tweetPageAuthor = tweet.find('li > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
-                , tweetPageAuthor2 = tweet.find('div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > a > div > div:nth-child(2) > div > span').text()
-                , retweetAuthor = tweet.find('div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a > div:nth-child(1) > div:nth-child(2) > div > span').text()
-                , tweetAuthorLogin = tweetAuthor || tweetPageAuthor || tweetPageAuthor2 || retweetAuthor
                 , imgSrc = $imageContainer.find('img')
                     .prev('div')
                     .attr('style')
@@ -72,6 +66,23 @@ function run () {
                     .replace('?format=', '.')
                     .replace(/&name=[^"]+"[)];$/, ':orig')
             ;
+            let tweet = $imageContainer.closest('[role="blockquote"]'),
+                tweetAuthorLogin;
+
+            if (tweet.length) {
+                // quoted tweet body
+                tweetAuthorLogin = tweet.find('div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)').eq(1).text()
+            }
+            else {
+                // normal tweet
+                tweet = $imageContainer.closest('article');
+                tweetAuthorLogin = extractUsernameFromUri(
+                    tweet
+                        .find('a')
+                        .eq(1) // 0 - retweeted by (or tweet uri), 1 - tweet uri, 2 - tweet uri (or empty)
+                        .attr('href')
+                )
+            }
 
             data.username = tweetAuthorLogin;
             data.text = imgSrc;
@@ -113,6 +124,24 @@ function run () {
             // })
         ;
     }, 4000);
+}
+
+/**
+ * @param {string} uri /username/status/1158526558497169408
+ *                     /username
+ *                     /username/status/1158301826770358273/photo/3
+ * @return {string} @username
+ */
+function extractUsernameFromUri(uri) {
+    let result = uri.replace('/', '@'),
+        search = result.search(/[/]/)
+    ;
+
+    if (search > 0) {
+        result = result.substring(0, search);
+    }
+
+    return result;
 }
 
 function saveConfig(config) {
