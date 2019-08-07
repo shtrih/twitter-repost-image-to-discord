@@ -11,6 +11,7 @@
 // @connect      hooks.slack.com
 // @homepage     https://github.com/shtrih/twitter-repost-image-to-discord
 // @website      https://github.com/shtrih
+// @supportURL   https://github.com/shtrih/twitter-repost-image-to-discord/issues
 // ==/UserScript==
 
 /**
