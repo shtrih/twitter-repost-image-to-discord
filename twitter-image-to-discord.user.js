@@ -57,15 +57,21 @@ function run () {
                     // icon_url   string   override the default avatar of the webhook	false
                 }
                 , isDiscord = $(e.target).hasClass('dscrd')
-                , imgSrc = $imageContainer.find('img')
-                    .prev('div')
+                , img = $imageContainer.find('img')
+            ;
+            let imgSrc = img.attr('src');
+
+            // if it's not external link then link the original image
+            if (!img.closest('a[role="link"]').length) {
+                imgSrc = img.prev('div')
                     .attr('style')
                     // background-image: url("https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck?format=jpg&name=small"); →
                     // → https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck.jpg:orig
                     .replace('background-image: url("', '')
                     .replace('?format=', '.')
                     .replace(/&name=[^"]+"[)];$/, ':orig')
-            ;
+            }
+
             let tweet = $imageContainer.closest('[role="blockquote"]'),
                 tweetAuthorLogin;
 
