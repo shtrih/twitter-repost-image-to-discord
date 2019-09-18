@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.2.0
+// @version      1.2.1
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -176,7 +176,8 @@ function run () {
             ;
             let imgSrc = img.attr('src');
 
-            if (!img.closest('a[role="link"]').length) {
+            // External link image has no :orig version
+            if (!/[/]card_img[/]/.test(imgSrc)) {
                 imgSrc = img.prev('div')
                     .attr('style')
                     // background-image: url("https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck?format=jpg&name=small"); →
