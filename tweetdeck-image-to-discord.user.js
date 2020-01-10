@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         tweetdeck-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.0.2
+// @version      1.0.3
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://tweetdeck.twitter.com/*
@@ -65,7 +65,7 @@
 
         if (config.reposterNickname) {
             data.username = config.reposterNickname + ' 🔁';
-            data.text = 'by '+ tweetAuthorLogin +'\n' + imageUri;
+            data.text = 'by `'+ tweetAuthorLogin +'`\n' + imageUri;
         }
 
         if (config.reposterAvatar && !isDiscord) {

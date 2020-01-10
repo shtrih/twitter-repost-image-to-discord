@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.2.1
+// @version      1.2.2
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -210,7 +210,7 @@ function run () {
 
             if (config.reposterNickname) {
                 data.username = config.reposterNickname + ' 🔁';
-                data.text = 'by ' + tweetAuthorLogin + '\n' + imgSrc;
+                data.text = 'by `' + tweetAuthorLogin + '`\n' + imgSrc;
             }
 
             // Soo strange. If you override webhook avatar then Discord didn't show a preview of the image!
