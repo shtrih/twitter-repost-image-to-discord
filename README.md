@@ -8,4 +8,8 @@ Post image from https://twitter.com/ and https://tweetdeck.twitter.com/ to Disco
 
 * [Install `tweetdeck-image-to-discord.user.js`](https://github.com/shtrih/twitter-repost-image-to-discord/raw/master/tweetdeck-image-to-discord.user.js)
 
-Fill out variables `discordHookUri` or (and) `slackHookUri` to work!
+    Fill out variables `discordHookUri` or (and) `slackHookUri` to work!
+
+* [Install `twitter(old-interface)-image-to-discord.user.js`](https://github.com/shtrih/twitter-repost-image-to-discord/raw/master/twitter(old-interface)-image-to-discord.user.js)
+    
+    If you use an Old Twitter UI (like with `GoodTwitter` extension on Chrome) then use this script.
