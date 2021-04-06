@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         tweetdeck-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.0.3
+// @version      1.0.4
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://tweetdeck.twitter.com/*
 // @require      https://code.jquery.com/jquery-3.3.1.min.js#sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=
 // @grant        GM_xmlhttpRequest
+// @connect      discord.com
 // @connect      discordapp.com
 // @connect      hooks.slack.com
 // @homepage     https://github.com/shtrih/twitter-repost-image-to-discord

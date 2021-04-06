@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter(old-interface)-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -9,6 +9,7 @@
 // @require      https://code.jquery.com/ui/1.12.1/jquery-ui.min.js
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
+// @connect      discord.com
 // @connect      discordapp.com
 // @connect      hooks.slack.com
 // @homepage     https://github.com/shtrih/twitter-repost-image-to-discord
@@ -77,7 +78,7 @@ function run () {
         getHooksForm = (title, hook) => `<div class="hooks">
             <hr />
             <p><label>Title: <input type="text" placeholder="Post to Discord" value="${title}" /></label></p>
-            <p><label>Hook: <input type="url" placeholder="https://discordapp.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" pattern="^https?:[/]{2}(discordapp[.]com|hooks[.]slack[.]com)[/].+" value="${hook}" /></label></p>
+            <p><label>Hook: <input type="url" placeholder="https://discordapp.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" pattern="^https?:[/]{2}(discord(app)?[.]com|hooks[.]slack[.]com)[/].+" value="${hook}" /></label></p>
         </div>`,
         getShareLinks = (title, hookIndex) => `<div class="btn-link share-42" data-hook-index="${hookIndex}">${title}</div>`,
         hook = function (title = '', uri = '') {
@@ -173,7 +174,7 @@ function run () {
                 }
                 , shareLink = $(e.target)
                 , hookUri = config.hooks[ shareLink.data('hookIndex') ].uri
-                , isDiscord = Boolean(hookUri.match(/^https?:[/]{2}discordapp[.]com[/]/))
+                , isDiscord = Boolean(hookUri.match(/^https?:[/]{2}discord(app)?[.]com[/]/))
                 , img = $imageContainer.find('img')
 
                 , tweetHeader = $imageContainer.parents('.content').children('.stream-item-header')
