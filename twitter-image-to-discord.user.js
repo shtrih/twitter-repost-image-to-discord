@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.3.0
+// @version      1.3.1
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -31,7 +31,7 @@ run();
 function run () {
     console.log($.fn.jquery);
 
-    GM_addStyle('@import url(https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css)');
+    GM_addStyle('@import url(https://code.jquery.com/ui/1.12.1/themes/vader/jquery-ui.css)');
     GM_addStyle(`
         .${STORAGE_KEY}-button {
             position: fixed;
