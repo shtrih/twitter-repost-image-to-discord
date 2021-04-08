@@ -324,6 +324,7 @@ function run () {
     const dialog = $(`#${STORAGE_KEY}`).dialog({
         resizable: false,
         height: "auto",
+        maxHeight: window.innerHeight,
         width: 500,
         modal: false,
         autoOpen: false,
