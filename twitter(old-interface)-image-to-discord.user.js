@@ -83,37 +83,6 @@ function run () {
             return {title, uri}
         },
         convertLegacyConfig = function(config) {
-            let result = {
-                    hooks: []
-                },
-                converted = false;
-
-            if (config.slackHookUri) {
-                result.hooks.push({
-                    title: 'to Slack',
-                    uri: config.slackHookUri
-                });
-
-                converted = true;
-            }
-
-            if (config.discordHookUri) {
-                result.hooks.push({
-                    title: 'to Discord',
-                    uri: config.discordHookUri
-                });
-
-                converted = true;
-            }
-
-            if (converted) {
-                result.reposterNickname = config.reposterNickname;
-
-                saveConfig(result);
-
-                return result;
-            }
-
             return config;
         },
         loadDialogState = function() {
