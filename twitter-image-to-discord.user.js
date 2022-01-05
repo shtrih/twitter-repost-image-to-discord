@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    https://github.com/shtrih
-// @version      2.0.0
+// @version      2.0.1
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter(old-interface)-image-to-discord.user.js
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
