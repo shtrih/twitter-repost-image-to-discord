@@ -5,10 +5,12 @@
 // @description  Repost Image to Discord (or to Slack) via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
-// @require      https://code.jquery.com/jquery-3.4.1.min.js
-// @require      https://code.jquery.com/ui/1.12.1/jquery-ui.min.js
+// @require      https://code.jquery.com/jquery-3.4.1.min.js#sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=
+// @require      https://code.jquery.com/ui/1.12.1/jquery-ui.min.js#sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=
+// @resource     UI_CSS https://code.jquery.com/ui/1.12.1/themes/vader/jquery-ui.css
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
+// @grant        GM_getResourceURL
 // @connect      discord.com
 // @connect      discordapp.com
 // @connect      hooks.slack.com
@@ -31,7 +33,7 @@ run();
 function run () {
     console.log($.fn.jquery);
 
-    GM_addStyle('@import url(https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css)');
+    GM_addStyle('@import url('+GM_getResourceURL('UI_CSS')+')');
     GM_addStyle(`
         .${STORAGE_KEY}-button {
             position: fixed;
