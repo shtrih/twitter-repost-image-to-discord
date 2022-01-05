@@ -98,7 +98,7 @@ function run () {
         getHooksForm = (title, hook) => `<div class="hooks">
             <hr />
             <p><label>Title: <input type="text" placeholder="Post to Discord" value="${title}" /></label></p>
-            <p><label>Hook: <input type="url" placeholder="https://discordapp.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" pattern="^https?:[/]{2}(discord(app)?[.]com|hooks[.]slack[.]com)[/].+" value="${hook}" /></label></p>
+            <p><label>Webhook URL: <input type="url" placeholder="https://discord.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" pattern="^https?:[/]{2}(discord(app)?[.]com|hooks[.]slack[.]com)[/].+" value="${hook}" /></label></p>
         </div>`,
         spoilerTitle = '■',
         getShareLinks = (title, hookIndex) => `<div class="btn-link share-42" data-hook-index="${hookIndex}">${title}</div>`,
@@ -199,17 +199,24 @@ function run () {
 
                 if (tweet.length) {
                     // quoted tweet body
-                    tweetAuthorLogin = tweet.find('div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2)').eq(1).text()
+                    tweetAuthorLogin = extractUsernameFromUri($imageContainer.closest('a').attr('href'))
                 }
                 else {
-                    // normal tweet
-                    tweet = $imageContainer.closest('article');
-                    tweetAuthorLogin = extractUsernameFromUri(
-                        tweet
-                            .find('a')
-                            .eq(1) // 0 - retweeted by (or tweet uri), 1 - tweet uri, 2 - tweet uri (or empty)
-                            .attr('href')
-                    )
+                    link = $imageContainer.closest('a');
+
+                    // External link
+                    if (!link || link.attr("rel") === 'noopener noreferrer') {
+                        tweet = $imageContainer.closest('article');
+                        tweetAuthorLogin = extractUsernameFromUri(
+                            tweet
+                                .find('a')
+                                .eq(1) // 0 - retweeted by (or tweet uri), 1 - tweet uri, 2 - tweet uri (or empty)
+                                .attr('href')
+                        );
+                    }
+                    else {
+                        tweetAuthorLogin = extractUsernameFromUri(link.attr('href'))
+                    }
                 }
             }
 

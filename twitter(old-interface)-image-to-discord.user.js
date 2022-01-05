@@ -78,7 +78,7 @@ function run () {
         getHooksForm = (title, hook) => `<div class="hooks">
             <hr />
             <p><label>Title: <input type="text" placeholder="Post to Discord" value="${title}" /></label></p>
-            <p><label>Hook: <input type="url" placeholder="https://discordapp.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" pattern="^https?:[/]{2}(discord(app)?[.]com|hooks[.]slack[.]com)[/].+" value="${hook}" /></label></p>
+            <p><label>Webhook URL: <input type="url" placeholder="https://discord.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" pattern="^https?:[/]{2}(discord(app)?[.]com|hooks[.]slack[.]com)[/].+" value="${hook}" /></label></p>
         </div>`,
         getShareLinks = (title, hookIndex) => `<div class="btn-link share-42" data-hook-index="${hookIndex}">${title}</div>`,
         hook = function (title = '', uri = '') {
