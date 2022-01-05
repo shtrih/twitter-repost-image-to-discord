@@ -47,6 +47,7 @@ function run () {
             color: #eee;
             fill: #eee;
             border-radius: 3px 0 0 0;
+            z-index: 1000;
         }
         .${STORAGE_KEY}-button:hover {
             background-color: #865dca;
