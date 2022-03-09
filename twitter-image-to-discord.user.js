@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    https://github.com/shtrih
-// @version      2.0.1
-// @description  Repost Image to Discord (or to Slack) via Webhook in one click!
+// @version      2.0.2
+// @description  Repost Image to Discord via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
 // @match        https://tweetdeck.twitter.com/*
@@ -15,15 +15,14 @@
 // @grant        GM_getResourceURL
 // @connect      discordapp.com
 // @connect      discord.com
-// @connect      hooks.slack.com
 // @homepage     https://github.com/shtrih/twitter-repost-image-to-discord
 // @supportURL   https://github.com/shtrih/twitter-repost-image-to-discord/issues
 // @downloadURL  https://github.com/shtrih/twitter-repost-image-to-discord/raw/master/twitter-image-to-discord.user.js
+// @icon         https://tweetdeck.twitter.com/favicon.ico
 // ==/UserScript==
 
 /**
- * @see https://api.slack.com/custom-integrations/incoming-webhooks#legacy-customizations
- * @see https://discordapp.com/developers/docs/resources/webhook#execute-webhook
+ * @see https://discord.com/developers/docs/resources/webhook#execute-webhook
  */
 
 let config;
@@ -99,7 +98,7 @@ function run () {
         getHooksForm = (title, hook) => `<div class="hooks">
             <hr />
             <p><label>Title: <input type="text" placeholder="Post to Discord" value="${title}" /></label></p>
-            <p><label>Webhook URL: <input type="url" placeholder="https://discord.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" pattern="^https?:[/]{2}(discord(app)?[.]com|hooks[.]slack[.]com)[/].+" value="${hook}" /></label></p>
+            <p><label>Webhook URL: <input type="url" placeholder="https://discord.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" pattern="^https?:[/]{2}(discord(app)?[.]com)[/].+" value="${hook}" /></label></p>
         </div>`,
         spoilerTitle = '■',
         getShareLinks = (title, hookIndex) => `<div class="btn-link share-42" data-hook-index="${hookIndex}">${title}</div>`,
@@ -160,12 +159,11 @@ function run () {
 
             const
                 data = {
-                    // text       string   the message contents (up to 2000 characters)	one of content, file, embeds
+                    // content    string   the message contents (up to 2000 characters)	one of content, file, embeds
                     // username   string   override the default username of the webhook	false
                 }
                 , shareLink = $(e.target)
                 , hookUri = config.hooks[ shareLink.data('hookIndex') ].uri
-                , isDiscord = Boolean(hookUri.match(/^https?:[/]{2}discord(app)?[.]com[/]/))
             ;
             let tweetAuthorLogin
                 , imageUri
@@ -203,7 +201,7 @@ function run () {
                     tweetAuthorLogin = extractUsernameFromUri($imageContainer.closest('a').attr('href'))
                 }
                 else {
-                    link = $imageContainer.closest('a');
+                    let link = $imageContainer.closest('a');
 
                     // External link
                     if (!link || link.attr("rel") === 'noopener noreferrer') {
@@ -222,29 +220,32 @@ function run () {
             }
 
             data.username = tweetAuthorLogin;
-            data.text = imageUri;
+            data.content = imageUri;
             if (shareLink.text() === spoilerTitle) {
-                data.text = `|| ${data.text} ||`;
+                data.content = `|| ${data.content} ||`;
             }
 
             if (config.reposterNickname) {
                 data.username = config.reposterNickname + ' 🔁 ' + tweetAuthorLogin;
 
                 if (config.authorInText) {
-                    data.text = 'by `' + tweetAuthorLogin + '`:\n' + data.text;
+                    data.content = 'by `' + tweetAuthorLogin + '`:\n' + data.content;
                     data.username = config.reposterNickname;
                 }
             }
 
             GM_xmlhttpRequest({
                 method: 'POST',
-                url: isDiscord ? hookUri + '/slack' : hookUri,
+                url: hookUri,
                 data: JSON.stringify(data),
                 overrideMimeType: 'application/json',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 onload: (res) => {
-                    if (res.status !== 200) {
-                        alert('Error send request to ' + (isDiscord ? 'Discord' : 'Slack') + '. See console (F12).');
-                        console.log(res);
+                    if (res.status >= 400) {
+                        alert('Error send request to Discord. See console (F12).');
+                        console.log('Error sending Discord request:', res?.responseText, res);
                     }
                 }
             });
@@ -276,10 +277,9 @@ function run () {
     ;
 
     $('body').append(`<div id="${STORAGE_KEY}" title="Settings of twitter-image-to-discord.user.js">
-<p>Fill out fields with Discord/Slack hooks.</p>
+<p>Fill out fields with Discord hooks.</p>
 <p>Where you can find it:
-    <a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank">Discord</a>,
-    <a href="https://api.slack.com/custom-integrations/incoming-webhooks#legacy-customizations" target="_blank">Slack</a>.
+    <a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank">Intro to Webhooks</a>.
 </p>
 <hr />
 
