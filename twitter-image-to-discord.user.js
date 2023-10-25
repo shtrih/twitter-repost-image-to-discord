@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    https://github.com/shtrih
-// @version      2.0.2
+// @version      2.0.3
 // @description  Repost Image to Discord via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -69,6 +69,7 @@ function run () {
             font-size: 14px; 
             padding: 0 4px; 
             z-index: 2;
+            color: #555;
         }
         .share-42:hover {
             text-decoration: underline;
