@@ -226,7 +226,7 @@ function run () {
 
             data.username = tweetAuthorLogin;
             data.content = imageUri;
-            if (shareLink.text() === spoilerTitle) {
+            if (shareLink.text() === spoilerTitle+textMessageTitle) {
                 data.content = `|| ${data.content} ||`;
             } else if (shareLink.text() === textMessageTitle) {
                 let message = prompt("Enter your message");
