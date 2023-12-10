@@ -72,7 +72,7 @@ function run () {
             margin: 0 2px;
             z-index: 2;
             color: #555;
-            line-height: 18px;
+            line-height: 16px;
         }
         .share-42:hover {
             text-decoration: underline;
