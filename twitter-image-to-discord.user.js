@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    https://github.com/shtrih
-// @version      2.1
+// @version      2.2
 // @description  Repost Image to Discord via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
 // @match        https://tweetdeck.twitter.com/*
+// @match        https://x.com/*
 // @require      https://code.jquery.com/jquery-3.4.1.min.js#sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=
 // @require      https://code.jquery.com/ui/1.12.1/jquery-ui.min.js#sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=
 // @resource     UI_CSS https://code.jquery.com/ui/1.12.1/themes/vader/jquery-ui.css
@@ -19,7 +20,7 @@
 // @supportURL   https://github.com/shtrih/twitter-repost-image-to-discord/issues
 // @downloadURL  https://github.com/shtrih/twitter-repost-image-to-discord/raw/master/twitter-image-to-discord.user.js
 // @updateURL    https://github.com/shtrih/twitter-repost-image-to-discord/raw/master/twitter-image-to-discord.user.js
-// @icon         https://tweetdeck.twitter.com/favicon.ico
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=x.com
 // ==/UserScript==
 
 /**
@@ -72,7 +73,7 @@ function run () {
             margin: 0 2px;
             z-index: 2;
             color: #555;
-            line-height: 16px;
+            line-height: 18px;
         }
         .share-42:hover {
             text-decoration: underline;
