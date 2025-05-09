@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    https://github.com/shtrih
-// @version      2.2
+// @version      2.3
 // @description  Repost Image to Discord via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -29,7 +29,6 @@
 
 let config;
 const STORAGE_KEY = 'twttr-img2dscrd';
-const IS_TWEETDECK = window.location.hostname === 'tweetdeck.twitter.com';
 
 run();
 
@@ -56,7 +55,6 @@ function run () {
         }
         #${STORAGE_KEY} input[type=text], #${STORAGE_KEY} input[type=url] {
             width: 100%;
-            ${IS_TWEETDECK ? 'color: #444;' : ''}
         }
         #${STORAGE_KEY} input:invalid {
           color: red;
@@ -66,7 +64,7 @@ function run () {
             width: 100%;
         }
         .share-42 {
-            position: absolute; 
+            position: absolute;
             background: rgba(250, 250, 250, 0.9);
             font-size: 14px; 
             padding: 0 2px;
@@ -159,6 +157,50 @@ function run () {
             saveConfig(cfg);
             shareButtonsCreate(cfg);
         },
+        getImgURI = ($imageContainer) => {
+            const img = $imageContainer.find('img');
+            let imageUri = img.attr('src');
+
+            // External link image has no :orig version
+            if (!/[/]card_img[/]/.test(imageUri)) {
+                imageUri = img.prev('div')
+                    .attr('style')
+                    // background-image: url("https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck?format=jpg&name=small"); →
+                    // → https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck.jpg:orig
+                    .replace('background-image: url("', '')
+                    .replace('?format=', '.')
+                    .replace(/&name=[^"]+"[)];$/, ':orig')
+            }
+
+            return imageUri
+        },
+        getUserLogin = ($imageContainer) => {
+            let tweetAuthorLogin;
+            let tweet = $imageContainer.closest('[role="blockquote"]');
+
+            if (tweet.length) {
+                // quoted tweet body
+                tweetAuthorLogin = extractUsernameFromUri($imageContainer.closest('a').attr('href'))
+            }
+            else {
+                let link = $imageContainer.closest('a');
+
+                // External link
+                if (!link || link.attr("rel") === 'noopener noreferrer') {
+                    tweet = $imageContainer.closest('article');
+                    tweetAuthorLogin = extractUsernameFromUri(
+                        tweet
+                            .find('a')
+                            .eq(1) // 0 - retweeted by (or tweet uri), 1 - tweet uri, 2 - tweet uri (or empty)
+                            .attr('href')
+                    );
+                }
+                else {
+                    tweetAuthorLogin = extractUsernameFromUri(link.attr('href'))
+                }
+            }
+            return tweetAuthorLogin
+        },
         shareClickHandler = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -171,67 +213,23 @@ function run () {
                 , shareLink = $(e.target)
                 , hookUri = config.hooks[ shareLink.data('hookIndex') ].uri
             ;
-            let tweetAuthorLogin
-                , imageUri
+            const imageUri = getImgURI($imageContainer),
+                tweetAuthorLogin = getUserLogin($imageContainer)
             ;
-            if (IS_TWEETDECK) {
-                const tweetHeader = $imageContainer.parents('.js-stream-item-content').find('.js-tweet-header');
-                tweetAuthorLogin = $('.username', tweetHeader).text();
-                imageUri = $imageContainer.attr('style')
-                // background-image:url(https://pbs.twimg.com/media/EAuEVnVUYAId48z.jpg?format=jpg&name=small) →
-                // → https://pbs.twimg.com/media/EAuEVnVUYAId48z.jpg:orig
-                    .replace('background-image:url(', '')
-                    .replace(/[?]format=[a-z]+/, '')
-                    .replace(/&name=[^)]+[)]$/, ':orig')
-                ;
-            }
-            else {
-                const img = $imageContainer.find('img');
-                imageUri = img.attr('src');
-
-                // External link image has no :orig version
-                if (!/[/]card_img[/]/.test(imageUri)) {
-                    imageUri = img.prev('div')
-                        .attr('style')
-                        // background-image: url("https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck?format=jpg&name=small"); →
-                        // → https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck.jpg:orig
-                        .replace('background-image: url("', '')
-                        .replace('?format=', '.')
-                        .replace(/&name=[^"]+"[)];$/, ':orig')
-                }
-
-                let tweet = $imageContainer.closest('[role="blockquote"]');
-
-                if (tweet.length) {
-                    // quoted tweet body
-                    tweetAuthorLogin = extractUsernameFromUri($imageContainer.closest('a').attr('href'))
-                }
-                else {
-                    let link = $imageContainer.closest('a');
-
-                    // External link
-                    if (!link || link.attr("rel") === 'noopener noreferrer') {
-                        tweet = $imageContainer.closest('article');
-                        tweetAuthorLogin = extractUsernameFromUri(
-                            tweet
-                                .find('a')
-                                .eq(1) // 0 - retweeted by (or tweet uri), 1 - tweet uri, 2 - tweet uri (or empty)
-                                .attr('href')
-                        );
-                    }
-                    else {
-                        tweetAuthorLogin = extractUsernameFromUri(link.attr('href'))
-                    }
-                }
-            }
 
             data.username = tweetAuthorLogin;
             data.content = imageUri;
+
             if (shareLink.text() === spoilerTitle+textMessageTitle) {
                 data.content = `|| ${data.content} ||`;
             } else if (shareLink.text() === textMessageTitle) {
                 let message = prompt("Enter your message");
-                data.content = `${message}\n${data.content}`;
+                if (message === null) {
+                    return
+                }
+                else if (message !== "") {
+                    data.content = `${message}\n${data.content}`;
+                }
             }
 
             if (config.reposterNickname) {
@@ -333,27 +331,15 @@ function run () {
 
     shareButtonsCreate(config);
 
-    if (IS_TWEETDECK) {
-        $('.js-app')
-            .on('mouseenter', '.js-media-image-link', (e) => {
-                $imageContainer = $(e.currentTarget);
+    setTimeout(function () {
+        $('main')
+            .on('mouseenter', 'section article img', (e) => {
+                $imageContainer = $(e.currentTarget).closest('a');
 
-                $imageContainer.parent().prepend(shareButtons);
+                $imageContainer.prepend(shareButtons);
             })
         ;
-    }
-    else {
-        setTimeout(function () {
-            $('main')
-                .on('mouseenter', 'section article img', (e) => {
-                    $imageContainer = $(e.currentTarget).closest('a');
-
-                    $imageContainer.prepend(shareButtons);
-                })
-            ;
-        }, 4000);
-    }
-
+    }, 4000);
 }
 
 /**
