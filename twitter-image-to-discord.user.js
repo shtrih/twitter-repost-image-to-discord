@@ -28,7 +28,11 @@
  */
 
 let config;
-const STORAGE_KEY = 'twttr-img2dscrd';
+const STORAGE_KEY = 'twttr-img2dscrd',
+    CONTAINER_IMG = 'section article div[data-testid="tweetPhoto"][aria-label="Image"] img[alt="Image"]',
+    CONTAINER_VID = 'section article div[data-testid="tweetPhoto"][aria-label!="Image"]',
+    CONTAINER_TEXT = 'section article'
+;
 
 run();
 
@@ -75,6 +79,7 @@ function run () {
         }
         .share-42:hover {
             text-decoration: underline;
+            cursor: pointer;
         }
         /* tweetdeck */
         html.dark #${STORAGE_KEY} input[type=text], html.dark #${STORAGE_KEY} input[type=url] {
@@ -157,6 +162,9 @@ function run () {
             saveConfig(cfg);
             shareButtonsCreate(cfg);
         },
+        getTweetLink = ($container) => {
+            return $container.closest('article').find('time').closest('a').attr('href')
+        },
         getImgURI = ($imageContainer) => {
             const img = $imageContainer.find('img');
             let imageUri = img.attr('src');
@@ -174,32 +182,11 @@ function run () {
 
             return imageUri
         },
-        getUserLogin = ($imageContainer) => {
-            let tweetAuthorLogin;
-            let tweet = $imageContainer.closest('[role="blockquote"]');
-
-            if (tweet.length) {
-                // quoted tweet body
-                tweetAuthorLogin = extractUsernameFromUri($imageContainer.closest('a').attr('href'))
-            }
-            else {
-                let link = $imageContainer.closest('a');
-
-                // External link
-                if (!link || link.attr("rel") === 'noopener noreferrer') {
-                    tweet = $imageContainer.closest('article');
-                    tweetAuthorLogin = extractUsernameFromUri(
-                        tweet
-                            .find('a')
-                            .eq(1) // 0 - retweeted by (or tweet uri), 1 - tweet uri, 2 - tweet uri (or empty)
-                            .attr('href')
-                    );
-                }
-                else {
-                    tweetAuthorLogin = extractUsernameFromUri(link.attr('href'))
-                }
-            }
-            return tweetAuthorLogin
+        getUserLogin = ($container) => {
+            return extractUsernameFromUri(getTweetLink($container))
+        },
+        fixDomain = (uri) => {
+            return 'https://fixvx.com' + uri;
         },
         shareClickHandler = (e) => {
             e.preventDefault();
@@ -213,33 +200,38 @@ function run () {
                 , shareLink = $(e.target)
                 , hookUri = config.hooks[ shareLink.data('hookIndex') ].uri
             ;
-            const imageUri = getImgURI($imageContainer),
-                tweetAuthorLogin = getUserLogin($imageContainer)
+            let content = ``,
+                byNickname = getUserLogin(btnsContainer)
             ;
-
-            data.username = tweetAuthorLogin;
-            data.content = imageUri;
+            if (containerType === CONTAINER_IMG) {
+                content = getImgURI(btnsContainer)
+            } else if (containerType === CONTAINER_VID) {
+                content = fixDomain(getTweetLink(btnsContainer))
+            }
 
             if (shareLink.text() === spoilerTitle+textMessageTitle) {
-                data.content = `|| ${data.content} ||`;
+                content = `|| ${content} ||`;
             } else if (shareLink.text() === textMessageTitle) {
                 let message = prompt("Enter your message");
                 if (message === null) {
                     return
                 }
                 else if (message !== "") {
-                    data.content = `${message}\n${data.content}`;
+                    content = `${message}\n${content}`;
                 }
             }
 
             if (config.reposterNickname) {
-                data.username = config.reposterNickname + ' 🔁 ' + tweetAuthorLogin;
+                byNickname = config.reposterNickname + ' 🔁 ' + byNickname;
 
                 if (config.authorInText) {
-                    data.content = 'by `' + tweetAuthorLogin + '`:\n' + data.content;
-                    data.username = config.reposterNickname;
+                    content = 'by `' + byNickname + '`:\n' + content;
+                    byNickname = config.reposterNickname;
                 }
             }
+
+            data.username = byNickname;
+            data.content = content;
 
             GM_xmlhttpRequest({
                 method: 'POST',
@@ -285,7 +277,8 @@ function run () {
             }
         }
     ;
-    let $imageContainer,
+    let btnsContainer,
+        containerType,
         shareButtons
     ;
 
@@ -333,10 +326,18 @@ function run () {
 
     setTimeout(function () {
         $('main')
-            .on('mouseenter', 'section article img', (e) => {
-                $imageContainer = $(e.currentTarget).closest('a');
-
-                $imageContainer.prepend(shareButtons);
+            .on('mouseenter', CONTAINER_IMG, (e) => {
+                containerType = CONTAINER_IMG;
+                btnsContainer = $(e.currentTarget).closest('a');
+                btnsContainer.prepend(shareButtons);
+            })
+            .on('mouseenter', CONTAINER_VID, (e) => {
+                containerType = CONTAINER_VID;
+                btnsContainer = $(e.currentTarget);
+                btnsContainer.prepend(shareButtons);
+            })
+            .on('mouseleave', CONTAINER_TEXT, (e) => {
+                shareButtons.detach();
             })
         ;
     }, 4000);
