@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    https://github.com/shtrih
-// @version      2.4
+// @version      2.5
 // @description  Repost Image to Discord via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -30,8 +30,11 @@
 let config;
 const STORAGE_KEY = 'twttr-img2dscrd',
     CONTAINER_IMG = 'section article div[data-testid="tweetPhoto"] img[alt!="Embedded video"]',
-    CONTAINER_VID = 'section article div[data-testid="tweetPhoto"]:has(div[aria-label="Embedded video"])',
-    CONTAINER_TEXT = 'section article'
+    CONTAINER_VID = 'section article div[data-testid="tweetPhoto"]:has([data-testid="playButton"])',
+    CONTAINER_VID2 = 'section article div[data-testid="tweetPhoto"]:has(div[data-testid="videoPlayer"])',
+    CONTAINER_TEXT = 'section article',
+    TYPE_IMG = 'img',
+    TYPE_VID = 'vid'
 ;
 
 run();
@@ -203,9 +206,9 @@ function run () {
             let content = ``,
                 byNickname = getUserLogin(btnsContainer)
             ;
-            if (containerType === CONTAINER_IMG) {
+            if (containerType === TYPE_IMG) {
                 content = getImgURI(btnsContainer)
-            } else if (containerType === CONTAINER_VID) {
+            } else if (containerType === TYPE_VID) {
                 content = fixDomain(getTweetLink(btnsContainer))
             }
 
@@ -327,12 +330,17 @@ function run () {
     setTimeout(function () {
         $('main')
             .on('mouseenter', CONTAINER_IMG, (e) => {
-                containerType = CONTAINER_IMG;
+                containerType = TYPE_IMG;
                 btnsContainer = $(e.currentTarget).closest('a');
                 btnsContainer.prepend(shareButtons);
             })
             .on('mouseenter', CONTAINER_VID, (e) => {
-                containerType = CONTAINER_VID;
+                containerType = TYPE_VID;
+                btnsContainer = $(e.currentTarget);
+                btnsContainer.prepend(shareButtons);
+            })
+            .on('mouseenter', CONTAINER_VID2, (e) => {
+                containerType = TYPE_VID;
                 btnsContainer = $(e.currentTarget);
                 btnsContainer.prepend(shareButtons);
             })
