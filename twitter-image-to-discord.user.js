@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    https://github.com/shtrih
-// @version      2.5
+// @version      2.6
 // @description  Repost Image to Discord via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -178,6 +178,7 @@ function run () {
                     .attr('style')
                     // background-image: url("https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck?format=jpg&name=small"); →
                     // → https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck.jpg:orig
+                    .replace('filter: brightness(1); ', '')
                     .replace('background-image: url("', '')
                     .replace('?format=', '.')
                     .replace(/&name=[^"]+"[)];$/, ':orig')
