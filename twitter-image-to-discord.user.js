@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    https://github.com/shtrih
-// @version      2.6
+// @version      2.7
 // @description  Repost Image to Discord via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -192,6 +192,25 @@ function run () {
         fixDomain = (uri) => {
             return 'https://fixvx.com' + uri;
         },
+        getText = ($container) => {
+            const
+                // Clone so we don't mutate the live DOM
+                article = $container.closest('article')[0].cloneNode(true),
+                xp = new XPathEvaluator()
+            ;
+
+            // Replace emoji images with their alt text
+            // <img alt="😭" src="https://abs-0.twimg.com/emoji/v2/svg/1f62d.svg">
+            article.querySelectorAll('img[alt]').forEach(img => {
+                img.replaceWith(document.createTextNode(img.alt));
+            });
+
+            let result = xp.evaluate('div/div/div[2]/div[2]/div[2]', article, null, XPathResult.STRING_TYPE).stringValue
+            if (result) {
+                return result
+            }
+            return xp.evaluate('div/div/div[3]/div', article, null, XPathResult.STRING_TYPE).stringValue;
+        },
         shareClickHandler = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -216,7 +235,7 @@ function run () {
             if (shareLink.text() === spoilerTitle+textMessageTitle) {
                 content = `|| ${content} ||`;
             } else if (shareLink.text() === textMessageTitle) {
-                let message = prompt("Enter your message");
+                let message = prompt("Enter your message", getText(btnsContainer));
                 if (message === null) {
                     return
                 }
