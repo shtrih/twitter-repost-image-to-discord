@@ -180,8 +180,9 @@ function run () {
                     // → https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck.jpg:orig
                     .replace('filter: brightness(1); ', '')
                     .replace('background-image: url("', '')
-                    .replace('?format=', '.')
-                    .replace(/&name=[^"]+"[)];$/, ':orig')
+                    //.replace('?format=', '.')
+                    //.replace(/&name=[^"]+"[)];$/, ':orig')
+                    .replace(/"[)];$/, '')
             }
 
             return imageUri
