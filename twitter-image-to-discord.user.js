@@ -1,19 +1,15 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    https://github.com/shtrih
-// @version      2.8
+// @version      2.9
 // @description  Repost Image to Discord via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
 // @match        https://tweetdeck.twitter.com/*
 // @match        https://x.com/*
-// @require      https://code.jquery.com/jquery-3.4.1.min.js#sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=
-// @require      https://code.jquery.com/ui/1.12.1/jquery-ui.min.js#sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=
-// @resource     UI_CSS https://code.jquery.com/ui/1.12.1/themes/vader/jquery-ui.css
 // @run-at       document-end
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
-// @grant        GM_getResourceURL
 // @connect      discordapp.com
 // @connect      discord.com
 // @homepage     https://github.com/shtrih/twitter-repost-image-to-discord
@@ -29,7 +25,7 @@
 
 let config;
 const STORAGE_KEY = 'twttr-img2dscrd',
-    CONTAINER_IMG = 'section article div[data-testid="tweetPhoto"] img[alt!="Embedded video"]',
+    CONTAINER_IMG = 'section article div[data-testid="tweetPhoto"] img:not([alt="Embedded video"])',
     CONTAINER_VID = 'section article div[data-testid="tweetPhoto"]:has([data-testid="playButton"])',
     CONTAINER_VID2 = 'section article div[data-testid="tweetPhoto"]:has(div[data-testid="videoPlayer"])',
     CONTAINER_TEXT = 'section article',
@@ -40,9 +36,6 @@ const STORAGE_KEY = 'twttr-img2dscrd',
 run();
 
 function run () {
-    console.log($.fn.jquery);
-
-    GM_addStyle('@import url('+GM_getResourceURL('UI_CSS')+')');
     GM_addStyle(`
         .${STORAGE_KEY}-button {
             position: fixed;
@@ -60,15 +53,127 @@ function run () {
             background-color: #865dca;
             cursor: pointer;
         }
+        #${STORAGE_KEY} {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            max-width: calc(100vw - 20px);
+            max-height: calc(100vh - 20px);
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 4px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, .6);
+            z-index: 10000;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        #${STORAGE_KEY}.hidden {
+            display: none;
+        }
+        #${STORAGE_KEY} .dlg-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 14px;
+            background: #2a2a2a;
+            border-bottom: 1px solid #444;
+            border-radius: 4px 4px 0 0;
+            font-weight: bold;
+        }
+        #${STORAGE_KEY} .dlg-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #${STORAGE_KEY} .dlg-body {
+            padding: 10px 14px;
+            overflow-y: auto;
+        }
+        #${STORAGE_KEY} .dlg-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #2a2a2a;
+            border-top: 1px solid #444;
+            border-radius: 0 0 4px 4px;
+        }
+        #${STORAGE_KEY} button {
+            background: #3a3a3a;
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 4px 12px;
+            cursor: pointer;
+            font: inherit;
+        }
+        #${STORAGE_KEY} button:hover {
+            background: #4a4a4a;
+        }
+        #${STORAGE_KEY} .dlg-close {
+            padding: 0 8px;
+            font-size: 16px;
+            line-height: 24px;
+        }
+        #${STORAGE_KEY} .add-hook {
+            margin-top: 10px;
+            font-size: 16px;
+            padding: 2px 14px;
+        }
+        #${STORAGE_KEY} p {
+            margin: 4px 0;
+        }
         #${STORAGE_KEY} input[type=text], #${STORAGE_KEY} input[type=url] {
             width: 100%;
+            box-sizing: border-box;
+            background: #111;
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 4px 6px;
+            font: inherit;
         }
         #${STORAGE_KEY} input:invalid {
-          color: red;
+            color: red;
         }
         #${STORAGE_KEY} label {
             display: inline-block;
             width: 100%;
+        }
+        #${STORAGE_KEY} .hooks {
+            display: flex;
+            align-items: center;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #262626;
+            padding: 6px 8px;
+            margin: 10px 0 0;
+        }
+        #${STORAGE_KEY} .drag-handle {
+            flex: none;
+            cursor: grab;
+            padding: 0 8px 0 0;
+            color: #999;
+            font-size: 16px;
+            line-height: 1.2;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #${STORAGE_KEY} .drag-handle:hover {
+            color: #eee;
+        }
+        #${STORAGE_KEY} .hooks.dragging {
+            opacity: .5;
+        }
+        #${STORAGE_KEY} .hook-fields {
+            flex: 1;
+            min-width: 0;
         }
         .share-42 {
             position: absolute;
@@ -85,9 +190,6 @@ function run () {
             cursor: pointer;
         }
         /* tweetdeck */
-        html.dark #${STORAGE_KEY} input[type=text], html.dark #${STORAGE_KEY} input[type=url] {
-            color: #eee;
-        }
         html.dark .share-42 {
             background: rgba(21, 32, 43, 0.9);
         }
@@ -106,14 +208,22 @@ function run () {
                 <label><input type="radio" name="authorInText" value="1" ${isAuthorInText ? 'checked' : ''} />in message text</label>
             </p>
         </div>`,
-        getHooksForm = (title, hook) => `<div class="hooks">
-            <hr />
-            <p><label>Title: <input type="text" placeholder="Post to Discord" value="${title}" /></label></p>
-            <p><label>Webhook URL: <input type="url" placeholder="https://discord.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" pattern="^https?:[/]{2}(discord(app)?[.]com)[/].+" value="${hook}" /></label></p>
+        getHooksForm = (title, hookUri) => `<div class="hooks">
+            <span class="drag-handle" title="Drag to sort">&#x280F;</span>
+            <div class="hook-fields">
+                <p><label>Title: <input type="text" placeholder="Post to Discord" value="${title}" /></label></p>
+                <p><label>Webhook URL: <input type="url" placeholder="https://discord.com/api/webhooks/00000000000000000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" pattern="^https?:[/]{2}(discord(app)?[.]com)[/].+" value="${hookUri}" /></label></p>
+            </div>
         </div>`,
         spoilerTitle = '🕶️',
         textMessageTitle = '📝',
-        getShareLinks = (title, hookIndex) => `<div class="btn-link share-42" data-hook-index="${hookIndex}">${title}</div>`,
+        createShareLink = (title, hookIndex) => {
+            const link = document.createElement('div');
+            link.className = 'btn-link share-42';
+            link.dataset.hookIndex = hookIndex;
+            link.textContent = title;
+            return link;
+        },
         hook = function (title = '', uri = '') {
             return {title, uri}
         },
@@ -136,25 +246,25 @@ function run () {
                 }
             }
 
-            dialogAddButton.before(
+            formsContainer.insertAdjacentHTML('afterbegin',
                 getReposterForm(config.reposterNickname || '', config.authorInText || 0)
             );
-            dialogAddButton.before(
-                config.hooks.map((hook) => getHooksForm(hook.title, hook.uri)).join('')
+            formsContainer.insertAdjacentHTML('beforeend',
+                config.hooks.map((item) => getHooksForm(item.title, item.uri)).join('')
             );
         },
-        saveDialogState = function (dialog) {
-            let cfg = {hooks: []};
+        saveDialogState = function (dialogEl) {
+            const cfg = {hooks: []};
 
-            cfg.reposterNickname = $('input[name="nickname"]', dialog).val();
+            cfg.reposterNickname = dialogEl.querySelector('input[name="nickname"]').value;
             cfg.authorInText = Number(
-                $('input[name="authorInText"]:checked', dialog).val()
+                dialogEl.querySelector('input[name="authorInText"]:checked')?.value || 0
             );
 
-            $('.hooks', dialog).each(function () {
-                let inputs = $(this).find('input');
-                const title = inputs.eq(0).val(),
-                    uri = $.trim(inputs.eq(1).val())
+            dialogEl.querySelectorAll('.hooks').forEach(function (block) {
+                const inputs = block.querySelectorAll('input'),
+                    title = inputs[0].value,
+                    uri = inputs[1].value.trim()
                 ;
                 if (uri) {
                     cfg.hooks.push(hook(title, uri));
@@ -165,17 +275,17 @@ function run () {
             saveConfig(cfg);
             shareButtonsCreate(cfg);
         },
-        getTweetLink = ($container) => {
-            return $container.closest('article').find('time').closest('a').attr('href')
+        getTweetLink = (container) => {
+            return container.closest('article')?.querySelector('time')?.closest('a')?.getAttribute('href')
         },
-        getImgURI = ($imageContainer) => {
-            const img = $imageContainer.find('img');
-            let imageUri = img.attr('src');
+        getImgURI = (imageContainer) => {
+            const img = imageContainer.querySelector('img');
+            let imageUri = img.getAttribute('src');
 
             // External link image has no :orig version
             if (!/[/]card_img[/]/.test(imageUri)) {
-                imageUri = img.prev('div')
-                    .attr('style')
+                imageUri = img.previousElementSibling
+                    .getAttribute('style')
                     // background-image: url("https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck?format=jpg&name=small"); →
                     // → https://pbs.twimg.com/media/EA0z0mvVUAAY1Ck.jpg:orig
                     .replace('filter: brightness(1); ', '')
@@ -187,16 +297,16 @@ function run () {
 
             return imageUri
         },
-        getUserLogin = ($container) => {
-            return extractUsernameFromUri(getTweetLink($container))
+        getUserLogin = (container) => {
+            return extractUsernameFromUri(getTweetLink(container))
         },
         fixDomain = (uri) => {
             return 'https://fixvx.com' + uri;
         },
-        getText = ($container) => {
+        getText = (container) => {
             const
                 // Clone so we don't mutate the live DOM
-                article = $container.closest('article')[0].cloneNode(true),
+                article = container.closest('article').cloneNode(true),
                 xp = new XPathEvaluator()
             ;
 
@@ -221,8 +331,8 @@ function run () {
                     // content    string   the message contents (up to 2000 characters)	one of content, file, embeds
                     // username   string   override the default username of the webhook	false
                 }
-                , shareLink = $(e.target)
-                , hookUri = config.hooks[ shareLink.data('hookIndex') ].uri
+                , shareLink = e.target.closest('.share-42')
+                , hookUri = config.hooks[ shareLink.dataset.hookIndex ].uri
             ;
             let content = ``,
                 byNickname = getUserLogin(btnsContainer)
@@ -233,9 +343,9 @@ function run () {
                 content = fixDomain(getTweetLink(btnsContainer))
             }
 
-            if (shareLink.text() === spoilerTitle+textMessageTitle) {
+            if (shareLink.textContent === spoilerTitle+textMessageTitle) {
                 content = `|| ${content} ||`;
-            } else if (shareLink.text() === textMessageTitle) {
+            } else if (shareLink.textContent === textMessageTitle) {
                 let message = prompt("Enter your message", getText(btnsContainer));
                 if (message === null) {
                     return
@@ -273,30 +383,29 @@ function run () {
                 }
             });
         },
-        shareButtonsCreate = function (config) {
-            if (shareButtons && shareButtons.length) {
+        shareButtonsCreate = function (cfg) {
+            if (shareButtons) {
                 shareButtons.remove();
             }
 
-            shareButtons = $('<div/>');
-            let link;
-            for (let i = 0; i < config.hooks.length; i++) {
-                link = $(getShareLinks(config.hooks[i].title, i));
-                link.attr('style', `top: ${i * 16 + 4}px`);
-                link.on('click', shareClickHandler);
-                link.append(
-                    $(getShareLinks(spoilerTitle, i))
-                        .attr('title', 'With spoiler')
-                        .attr('style', 'display: inline-block')
-                        .on('click', shareClickHandler)
-                        .append(
-                            $(getShareLinks(textMessageTitle, i))
-                                .attr('title', 'With text message')
-                                .attr('style', 'display: inline-block')
-                                .on('click', shareClickHandler)
-                        )
-                );
+            shareButtons = document.createElement('div');
+            for (let i = 0; i < cfg.hooks.length; i++) {
+                const link = createShareLink(cfg.hooks[i].title, i);
+                link.setAttribute('style', `top: ${i * 16 + 4}px`);
+                link.addEventListener('click', shareClickHandler);
 
+                const spoilerLink = createShareLink(spoilerTitle, i);
+                spoilerLink.title = 'With spoiler';
+                spoilerLink.setAttribute('style', 'display: inline-block');
+                spoilerLink.addEventListener('click', shareClickHandler);
+
+                const textLink = createShareLink(textMessageTitle, i);
+                textLink.title = 'With text message';
+                textLink.setAttribute('style', 'display: inline-block');
+                textLink.addEventListener('click', shareClickHandler);
+
+                spoilerLink.append(textLink);
+                link.append(spoilerLink);
                 shareButtons.append(link);
             }
         }
@@ -306,70 +415,150 @@ function run () {
         shareButtons
     ;
 
-    $('body').append(`<div id="${STORAGE_KEY}" title="Settings of twitter-image-to-discord.user.js">
-<p>Fill out fields with Discord hooks.</p>
-<p>Where you can find it:
-    <a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank">Intro to Webhooks</a>.
-</p>
-<hr />
-
-<button title="Add more hooks">+</button>
+    document.body.insertAdjacentHTML('beforeend', `
+<div id="${STORAGE_KEY}" class="hidden" role="dialog" aria-label="Settings of twitter-image-to-discord.user.js">
+<div class="dlg-header">
+    <span class="dlg-title">Settings of twitter-image-to-discord.user.js</span>
+    <button type="button" class="dlg-close" title="Close">&times;</button>
+</div>
+<div class="dlg-body">
+    <p>Fill out fields with Discord hooks.</p>
+    <p>Where you can find it:
+        <a href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks" target="_blank">Intro to Webhooks</a>.
+    </p>
+    <div class="dlg-forms"></div>
+    <button type="button" class="add-hook" title="Add more hooks">+</button>
+</div>
+<div class="dlg-footer">
+    <button type="button" class="dlg-save">Save</button>
+    <button type="button" class="dlg-cancel">Cancel</button>
+</div>
 </div>
 <a class="${STORAGE_KEY}-button" title="Settings of twitter-image-to-discord.user.js">${settingsIcon}</a>`);
 
-    const dialog = $(`#${STORAGE_KEY}`).dialog({
-        resizable: false,
-        height: "auto",
-        maxHeight: window.innerHeight,
-        width: 500,
-        modal: false,
-        autoOpen: false,
-        buttons: {
-            "Save": function() {
-                saveDialogState(this);
+    const dialog = document.getElementById(STORAGE_KEY),
+        formsContainer = dialog.querySelector('.dlg-forms'),
+        dialogAddButton = dialog.querySelector('.add-hook'),
+        closeDialog = () => dialog.classList.add('hidden')
+    ;
 
-                $(this).dialog("close");
-            },
-            "Cancel": function() {
-                $(this).dialog("close");
-            }
+    dialog.querySelector('.dlg-save').addEventListener('click', () => {
+        saveDialogState(dialog);
+        closeDialog();
+    });
+    dialog.querySelector('.dlg-cancel').addEventListener('click', closeDialog);
+    dialog.querySelector('.dlg-close').addEventListener('click', closeDialog);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !dialog.classList.contains('hidden')) {
+            closeDialog();
         }
     });
 
-    const dialogAddButton = $('button', dialog).on('click', function() {
-        $(getHooksForm('', '')).insertBefore(this);
+    dialogAddButton.addEventListener('click', () => {
+        formsContainer.insertAdjacentHTML('beforeend', getHooksForm('', ''));
     });
 
-    $(`.${STORAGE_KEY}-button`).on('click', function() {
-        dialog.dialog('open');
+    document.querySelector(`.${STORAGE_KEY}-button`).addEventListener('click', () => {
+        dialog.classList.remove('hidden');
+    });
+
+    // Hooks sorting: drag & drop by the handle. draggable is enabled only while
+    // the pointer is down on the handle, so text selection in the fields is not affected.
+    let draggedHook = null;
+
+    formsContainer.addEventListener('mousedown', (e) => {
+        const block = e.target.closest('.hooks');
+        if (block && e.target.closest('.drag-handle')) {
+            block.draggable = true;
+        }
+    });
+
+    formsContainer.addEventListener('dragstart', (e) => {
+        const block = e.target.closest('.hooks');
+        if (!block || !block.draggable) {
+            return;
+        }
+        draggedHook = block;
+        // Firefox skips the drag when there is no data
+        e.dataTransfer.setData('text/plain', block.querySelector('input').value);
+        e.dataTransfer.effectAllowed = 'move';
+        block.classList.add('dragging');
+    });
+
+    formsContainer.addEventListener('dragover', (e) => {
+        if (!draggedHook) {
+            return;
+        }
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        // Insert before the first block whose middle is below the cursor
+        const nextBlock = [...formsContainer.querySelectorAll('.hooks:not(.dragging)')]
+            .find((el) => {
+                const rect = el.getBoundingClientRect();
+                return e.clientY < rect.top + rect.height / 2;
+            })
+        ;
+        formsContainer.insertBefore(draggedHook, nextBlock ?? null);
+    });
+
+    formsContainer.addEventListener('drop', (e) => e.preventDefault());
+    formsContainer.addEventListener('dragend', () => {
+        if (draggedHook) {
+            draggedHook.classList.remove('dragging');
+            draggedHook.draggable = false;
+            draggedHook = null;
+        }
+    });
+    // Plain click on the handle starts no drag — clear the leftover draggable flag
+    document.addEventListener('mouseup', () => {
+        formsContainer.querySelectorAll('.hooks[draggable="true"]')
+            .forEach((el) => el.draggable = false);
     });
 
     loadDialogState();
 
     shareButtonsCreate(config);
 
+    // Emulate jQuery's delegated mouseenter/mouseleave: react only when the pointer
+    // actually crosses the matched element's boundary.
+    const hoverEnter = (selector, handler) => {
+        document.addEventListener('mouseover', (e) => {
+            const el = e.target.closest(selector);
+            if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) {
+                handler(el, e);
+            }
+        });
+    };
+    const hoverLeave = (selector, handler) => {
+        document.addEventListener('mouseout', (e) => {
+            const el = e.target.closest(selector);
+            if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) {
+                handler(el, e);
+            }
+        });
+    };
+
     // Delegated events on document work no matter when React renders <main>,
     // so no fixed delay is needed and slow page loads don't break the script.
-    $(document)
-        .on('mouseenter', CONTAINER_IMG, (e) => {
-            containerType = TYPE_IMG;
-            btnsContainer = $(e.currentTarget).closest('a');
-            btnsContainer.prepend(shareButtons);
-        })
-        .on('mouseenter', CONTAINER_VID, (e) => {
-            containerType = TYPE_VID;
-            btnsContainer = $(e.currentTarget);
-            btnsContainer.prepend(shareButtons);
-        })
-        .on('mouseenter', CONTAINER_VID2, (e) => {
-            containerType = TYPE_VID;
-            btnsContainer = $(e.currentTarget);
-            btnsContainer.prepend(shareButtons);
-        })
-        .on('mouseleave', CONTAINER_TEXT, (e) => {
-            shareButtons.detach();
-        })
-    ;
+    hoverEnter(CONTAINER_IMG, (el) => {
+        containerType = TYPE_IMG;
+        btnsContainer = el.closest('a');
+        btnsContainer?.prepend(shareButtons);
+    });
+    hoverEnter(CONTAINER_VID, (el) => {
+        containerType = TYPE_VID;
+        btnsContainer = el;
+        el.prepend(shareButtons);
+    });
+    hoverEnter(CONTAINER_VID2, (el) => {
+        containerType = TYPE_VID;
+        btnsContainer = el;
+        el.prepend(shareButtons);
+    });
+    hoverLeave(CONTAINER_TEXT, () => {
+        shareButtons.remove();
+    });
 }
 
 /**
