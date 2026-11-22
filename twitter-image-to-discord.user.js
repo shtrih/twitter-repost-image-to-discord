@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         twitter-image-to-discord.user.js
 // @namespace    https://github.com/shtrih
-// @version      2.7
+// @version      2.8
 // @description  Repost Image to Discord via Webhook in one click!
 // @author       shtrih
 // @match        https://twitter.com/*
@@ -348,28 +348,28 @@ function run () {
 
     shareButtonsCreate(config);
 
-    setTimeout(function () {
-        $('main')
-            .on('mouseenter', CONTAINER_IMG, (e) => {
-                containerType = TYPE_IMG;
-                btnsContainer = $(e.currentTarget).closest('a');
-                btnsContainer.prepend(shareButtons);
-            })
-            .on('mouseenter', CONTAINER_VID, (e) => {
-                containerType = TYPE_VID;
-                btnsContainer = $(e.currentTarget);
-                btnsContainer.prepend(shareButtons);
-            })
-            .on('mouseenter', CONTAINER_VID2, (e) => {
-                containerType = TYPE_VID;
-                btnsContainer = $(e.currentTarget);
-                btnsContainer.prepend(shareButtons);
-            })
-            .on('mouseleave', CONTAINER_TEXT, (e) => {
-                shareButtons.detach();
-            })
-        ;
-    }, 4000);
+    // Delegated events on document work no matter when React renders <main>,
+    // so no fixed delay is needed and slow page loads don't break the script.
+    $(document)
+        .on('mouseenter', CONTAINER_IMG, (e) => {
+            containerType = TYPE_IMG;
+            btnsContainer = $(e.currentTarget).closest('a');
+            btnsContainer.prepend(shareButtons);
+        })
+        .on('mouseenter', CONTAINER_VID, (e) => {
+            containerType = TYPE_VID;
+            btnsContainer = $(e.currentTarget);
+            btnsContainer.prepend(shareButtons);
+        })
+        .on('mouseenter', CONTAINER_VID2, (e) => {
+            containerType = TYPE_VID;
+            btnsContainer = $(e.currentTarget);
+            btnsContainer.prepend(shareButtons);
+        })
+        .on('mouseleave', CONTAINER_TEXT, (e) => {
+            shareButtons.detach();
+        })
+    ;
 }
 
 /**
